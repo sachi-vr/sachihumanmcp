@@ -1,0 +1,97 @@
+from fastmcp import FastMCP, Image
+# pip install pywin32 mss
+import win32gui
+import mss
+# pip install Pillow
+import PIL.Image
+# pip install opencv-python
+import cv2
+
+# pip install pyttsx3
+import pyttsx3
+import tkinter as tk
+from tkinter import simpledialog
+
+import io
+import os
+import time
+
+# Create an MCP server
+mcp = FastMCP("HumanMCP",
+              description="Monitor, control and manage human via through the Model Context Protocol(MCP)")
+
+# 画像をキャプチャする
+@mcp.tool()
+def human_screen_capture(resizeRatio:float=0.25) -> Image:
+    """Montor what the human is doing in PC screen."""
+
+    with mss.mss() as sct:
+        # 全画面キャプチャ
+        monitor = sct.monitors[0]  # 全画面のモニター情報を取得
+        screenshot = sct.grab(monitor)
+        # mssのScreenShotオブジェクトをPillowのImageオブジェクトに変換
+        img = PIL.Image.frombytes("RGB", screenshot.size, screenshot.rgb)
+        new_size = (int(img.width * resizeRatio), int(img.height * resizeRatio)) # 幅と高さを50%にリサイズ
+        img_resized = img.resize(new_size, PIL.Image.Resampling.LANCZOS)
+        buffer = io.BytesIO()
+        img_resized.save(buffer, format='PNG', optimize=True, compress_level=9)
+        # Reset the buffer position to the beginning
+        buffer.seek(0)
+        # Return an Image object with the data and format of the buffer
+        return Image(data=buffer.getvalue(), format="png")
+
+@mcp.tool()
+def human_webcam_capture() -> Image:
+    """Monitor the human facial expressions with a webcam."""
+
+    # Open the webcam
+    cap = cv2.VideoCapture(0)
+    # Read a frame from the webcam
+    ret, frame = cap.read()
+    # Release the webcam
+    cap.release()
+    # Convert the frame to a PIL Image
+    img = PIL.Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG', optimize=True, compress_level=9)
+    # Reset the buffer position to the beginning
+    buffer.seek(0)
+    # Return an Image object with the data and format of the buffer
+    return Image(data=buffer.getvalue(), format="png")
+
+@mcp.tool()
+def get_current_datetime() -> str:
+    """Get the current date and time."""
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
+@mcp.tool()
+def wait_and_get_current_datetime(seconds:int=180) -> str:
+    """Wait for a specified number of seconds. Maximum is 180 seconds. return the current date and time."""
+    if seconds > 180:
+        time.sleep(180)
+        return get_current_datetime()
+    else:
+        time.sleep(seconds)
+        return  get_current_datetime()
+    
+@mcp.tool()
+def speak(text:str) -> bool:
+    """Speak a text string using the text-to-speech engine. The human can hear it."""
+    engine = pyttsx3.init()
+    engine.say(text)
+    engine.runAndWait()
+    return True
+
+@mcp.tool()
+def show_askstring_dialog(title:str, message:str) -> str|None:
+    """Show a dialog box to ask a string input from the human."""
+    speak(f"ダイアログに入力してください。{message}")
+    root = tk.Tk()
+    root.withdraw()
+    # 文字入力ダイアログを表示
+    user_input:str|None = simpledialog.askstring(title, message)
+    root.destroy()
+    return user_input
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")
