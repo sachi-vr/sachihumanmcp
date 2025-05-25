@@ -23,7 +23,7 @@ mcp = FastMCP("HumanMCP",
 # 画像をキャプチャする
 @mcp.tool()
 def human_screen_capture(resizeRatio:float=0.25) -> Image:
-    """Montor what the human is doing in PC screen."""
+    """Monitor what the human is doing in PC screen."""
 
     with mss.mss() as sct:
         # 全画面キャプチャ
@@ -66,7 +66,7 @@ def get_current_datetime() -> str:
 
 @mcp.tool()
 def wait_and_get_current_datetime(seconds:int=180) -> str:
-    """Wait for a specified number of seconds. Maximum is 180 seconds. return the current date and time."""
+    """Wait for a specified number of seconds. 180 seconds is Maximum. return the current date and time."""
     if seconds > 180:
         time.sleep(180)
         return get_current_datetime()
