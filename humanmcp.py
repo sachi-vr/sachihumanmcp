@@ -1,3 +1,4 @@
+import pathlib
 from fastmcp import FastMCP, Image
 # pip install pywin32 mss
 import win32gui
@@ -66,7 +67,7 @@ def get_current_datetime() -> str:
 
 @mcp.tool()
 def wait_and_get_current_datetime(seconds:int=180) -> str:
-    """Wait for a specified number of seconds. 180 seconds is Maximum. return the current date and time."""
+    """Wait for a specified number of seconds. This function returns an inaccurate second. So return the current date and time strings."""
     if seconds > 180:
         time.sleep(180)
         return get_current_datetime()
@@ -93,5 +94,28 @@ def show_askstring_dialog(title:str, message:str) -> str|None:
     root.destroy()
     return user_input
 
+@mcp.tool()
+def write_humanmcp_memory(content: str) -> bool:
+    """
+    Write the specified content to 'streamermcp_memory.txt'.
+    Overwrites any existing content.
+    """
+    memo_path = pathlib.Path.cwd() / "humanmcp_memory.txt"
+    with open(memo_path, "w", encoding="utf-8") as f:
+        f.write(content)
+    return True
+
+@mcp.tool()
+def read_humanmcp_memory() -> str:
+    """
+    Read and return the content of 'streamermcp_memory.txt'.
+    Returns an empty string if the file does not exist.
+    """
+    memo_path = pathlib.Path.cwd() / "humanmcp_memory.txt"
+    if memo_path.exists():
+        with open(memo_path, "r", encoding="utf-8") as f:
+            return f.read()
+    else:
+        return ""
 if __name__ == "__main__":
     mcp.run(transport="stdio")
