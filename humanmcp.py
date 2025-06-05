@@ -1,3 +1,4 @@
+import asyncio
 import pathlib
 from fastmcp import FastMCP, Image
 # pip install pywin32 mss
@@ -66,13 +67,13 @@ def get_current_datetime() -> str:
     return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
 @mcp.tool()
-def wait_and_get_current_datetime(seconds:int=180) -> str:
+async def wait_and_get_current_datetime(seconds:int=180) -> str:
     """Wait for a specified number of seconds. This function returns an inaccurate second. So return the current date and time strings."""
     if seconds > 180:
-        time.sleep(180)
+        await asyncio.sleep(180)
         return get_current_datetime()
     else:
-        time.sleep(seconds)
+        await asyncio.sleep(seconds)
         return  get_current_datetime()
     
 @mcp.tool()
